@@ -6,7 +6,6 @@ import json
 import random
 import codecs
 
-
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
@@ -24,7 +23,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.content.lower().find('im ') >= 0:
+    if message.content.lower().find('im ') >= 0 and len(message.content) < 25:
         lower_content = message.content.lower()
         index = lower_content.find('im ')
         if index != 0:
@@ -36,8 +35,7 @@ async def on_message(message):
 
 @tree.command(name='quote', description='post a quote', guild=discord.Object(id=secrets.guild_id))
 async def quote(interaction, user: discord.User = None):
-    with codecs.open('server.json', 'r', 'utf-8') as file:
-        data = json.load(file)
+    data = open_json()
 
     # user filter is present, filter all quotes down by id
     if user is not None:
@@ -83,9 +81,28 @@ async def get_avatar_from_id(user_id):
     return user.avatar
 
 
+def open_json():
+    with codecs.open('server.json', 'r', 'utf-8') as file:
+        return json.load(file)
+
+
 @tree.command(name='convo', description='make a conversation', guild=discord.Object(id=secrets.guild_id))
-async def convo(interaction):
-    await interaction.response.send_message("wip")
-    pass
+async def convo(interaction, num: app_commands.Range[int, 2, 8]):
+    data = open_json()
+    # filters out quotes without text contents
+    quotes = list(filter(lambda d: d['content'], data['Quotes']))
+
+    conversation = '```\n'
+
+    for _ in range(num):
+        # pick a random quote from available
+        rand_i = random.randint(0, len(quotes)-1)
+        conversation += '**' + quotes[rand_i]['author']['username'] + '**: '
+        conversation += quotes[rand_i]['content'] + '\n'
+
+    conversation += '```'
+
+    await interaction.response.send_message(conversation)
+
 
 client.run(secrets.token)
