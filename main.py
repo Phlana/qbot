@@ -1,5 +1,4 @@
 # This example requires the 'message_content' intent.
-
 import secrets
 import discord
 from discord import app_commands
@@ -26,50 +25,57 @@ async def on_message(message):
         return
 
     if message.content.lower().find('im ') >= 0:
-        content = message.content.lower()
-        index = content.find('im ')
-        msg = ""
+        lower_content = message.content.lower()
+        index = lower_content.find('im ')
         if index != 0:
-            if content[index - 1] == ' ':
-                msg = 'hi ' + content[index + 3:]
+            if lower_content[index - 1] == ' ':
+                await message.channel.send('hi ' + message.content[index + 3:])
         else:
-            msg = 'hi ' + content[index + 3:]
-
-        if msg != "":
-            await message.channel.send(msg)
+            await message.channel.send('hi ' + message.content[index + 3:])
 
 
-@tree.command(name='quote', description='post a random quote', guild=discord.Object(id=secrets.guild_id))
-async def quote(interaction):
+@tree.command(name='quote', description='post a quote', guild=discord.Object(id=secrets.guild_id))
+async def quote(interaction, user: discord.User = None):
     with codecs.open('server.json', 'r', 'utf-8') as file:
         data = json.load(file)
 
-    quotes = data['Quotes']
-    num_quotes = len(quotes)
-    random_index = random.randint(0, num_quotes-1)
-
-    q = quotes[random_index]
-    embed = await format_quote(q)
-
-    await interaction.response.send_message(embed=embed)
-
-
-async def format_quote(q):
-    author = q['author']
-    link = 'https://discord.com/channels/' + secrets.guild_id + '/' + q['channel_id'] + '/' + q['id']
-    img_link = await get_avatar_from_id(int(author['id']))
-    embed = discord.Embed()
-    embed.set_author(name=author['username'], url=link, icon_url=img_link)
-    # embed.timestamp = q['timestamp']
-
-    content = q['content']
-    if content == "":
-        embed.description = 'image quote (wip)'
+    # user filter is present, filter all quotes down by id
+    if user is not None:
+        quotes = list(filter(lambda d: int(d['author']['id']) == user.id, data['Quotes']))
+    # no filter, use all quotes
     else:
+        quotes = data['Quotes']
+
+    # pick a random quote from available
+    random_index = random.randint(0, len(quotes)-1)
+    # build and format embed
+    embeds = await embed_quote(quotes[random_index])
+    # send message with quote embed
+    await interaction.response.send_message(embeds=embeds)
+
+
+async def embed_quote(q):
+    link = 'https://discord.com/channels/' + secrets.guild_id + '/' + q['channel_id'] + '/' + q['id']
+    img_link = await get_avatar_from_id(int(q['author']['id']))
+    embed = discord.Embed(url='https://github.com/Phlana/qbot')
+    embed.set_author(name=q['author']['username'], url=link, icon_url=img_link)
+    embed.set_footer(text=q['timestamp'])
+
+    if q['content']:
         embed.description = q['content']
 
-    print(embed.description)
-    return embed
+    embeds = []
+    if len(q['attachments']) > 0:
+        for i, a in enumerate(q['attachments']):
+            if i == 0:
+                img_embed = embed.set_image(url=a['url'])
+            else:
+                img_embed = discord.Embed(url='https://github.com/Phlana/qbot').set_image(url=a['url'])
+            embeds.append(img_embed)
+    else:
+        embeds.append(embed)
+
+    return embeds
 
 
 async def get_avatar_from_id(user_id):
