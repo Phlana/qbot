@@ -1,8 +1,12 @@
 import botsecrets
 import discord
-from discord import app_commands
-import quotes as q
 import bot
+import quotes
+
+
+@bot.client.event
+async def setup_hook():
+    await bot.tree.sync()
 
 
 @bot.client.event
@@ -115,6 +119,7 @@ async def test(interaction):
             'embeds': row_embeds,
         }
         print(row)
+
     pass
 # https://discord.com/channels/162616223719358465/1065114333471838279/1091595353637257216
 
