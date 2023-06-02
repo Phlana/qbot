@@ -1,26 +1,19 @@
-# This example requires the 'message_content' intent.
-import secrets
+import botsecrets
 import discord
 from discord import app_commands
-import json
-import random
-import codecs
-
-intents = discord.Intents.default()
-intents.message_content = True
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+import quotes as q
+import bot
 
 
-@client.event
+@bot.client.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=secrets.guild_id))
-    print(f'We have logged in as {client.user}')
+    await bot.tree.sync(guild=discord.Object(id=botsecrets.guild_id))
+    print(f'We have logged in as {bot.client.user}')
 
 
-@client.event
+@bot.client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == bot.client.user:
         return
 
     if message.content.lower().find('im ') >= 0 and len(message.content) < 25:
@@ -33,76 +26,100 @@ async def on_message(message):
             await message.channel.send('hi ' + message.content[index + 3:])
 
 
-@tree.command(name='quote', description='post a quote', guild=discord.Object(id=secrets.guild_id))
-async def quote(interaction, user: discord.User = None):
-    data = open_json()
+@bot.tree.command(name='test', description='dont look\n🙈', guild=discord.Object(id=botsecrets.guild_id))
+async def test(interaction):
+    async for message in interaction.channel.history(limit=1):
+        # print(message)
+        link = 'https://discord.com/channels/{}/{}/{}'.format(botsecrets.guild_id, message.channel.id, message.id)
+        # print(link)
+        print(message.attachments)
+        # [{
+        #   "id":"971289156930134026",
+        #   "url":"https://cdn.discordapp.com/attachments/964377185311940668/971289156930134026/unknown.png",
+        #   "proxy_url":"https://media.discordapp.net/attachments/964377185311940668/971289156930134026/unknown.png",
+        #   "filename":"unknown.png",
+        #   "width":747,
+        #   "height":488,
+        #   "size":230922
+        # }]
+        print(message.embeds)
+        # [{
+        #   "url":"https://www.youtube.com/watch?v=TQcGnEhciNY",
+        #   "type":"video",
+        #   "title":"Chance the Rapper - I Love My Wife (BONUS TRACK)",
+        #   "description":"i made this it's a parody please do not sue\n\ntwitter: www.twitter.com/charliewinsmore\ntwitch: www.twitch.tv/charliewinsmore",
+        #   "color":16711680,
+        #   "thumbnail":{
+        #     "url":"https://i.ytimg.com/vi/TQcGnEhciNY/maxresdefault.jpg",
+        #     "proxy_url":"https://images-ext-1.discordapp.net/external/cC0RWlVtyy8aHRaOZ_lwr090ia1jnNJoBiwF33JTk2w/https/i.ytimg.com/vi/TQcGnEhciNY/maxresdefault.jpg",
+        #     "width":1280,
+        #     "height":720
+        #   },
+        #   "video":{
+        #     "url":"https://www.youtube.com/embed/TQcGnEhciNY",
+        #     "width":1280,
+        #     "height":720
+        #   },
+        #   "provider":{
+        #     "url":"https://www.youtube.com",
+        #     "name":"YouTube"
+        #   },
+        #   "author":{
+        #     "url":"https://www.youtube.com/channel/UCweqeK26PLExyiHjHmujFjw",
+        #     "name":"charliewinsmore"
+        #   }
+        # }]
 
-    # user filter is present, filter all quotes down by id
-    if user is not None:
-        quotes = list(filter(lambda d: int(d['author']['id']) == user.id, data['Quotes']))
-    # no filter, use all quotes
-    else:
-        quotes = data['Quotes']
+        row_author = {
+            'id': message.author.id,
+            'username': message.author.display_name,
+            'avatar': message.author.display_avatar,
+            'discriminator': message.author.discriminator,
+            'bot': message.author.bot,
+        }
 
-    # pick a random quote from available
-    random_index = random.randint(0, len(quotes)-1)
-    # build and format embed
-    embeds = await embed_quote(quotes[random_index])
-    # send message with quote embed
-    await interaction.response.send_message(embeds=embeds)
+        row_attachments = []
+        for attachment in message.attachments:
+            row_attachment = {
+                'id': attachment.id,
+                'url': attachment.url,
+                'proxy_url': attachment.proxy_url,
+                'filename': attachment.filename,
+                'width': attachment.width,
+                'height': attachment.height,
+                'size': attachment.size,
+            }
+            row_attachments.append(row_attachment)
 
+        row_embeds = []
+        for embed in message.embeds:
+            row_embed = {
+                'url': embed.url,
+                'type': embed.type,
+                'title': embed.title,
+                'description': embed.description,
+                'color': embed.color,
+            }
+            row_embeds.append(row_embed)
 
-async def embed_quote(q):
-    link = 'https://discord.com/channels/' + secrets.guild_id + '/' + q['channel_id'] + '/' + q['id']
-    img_link = await get_avatar_from_id(int(q['author']['id']))
-    embed = discord.Embed(url='https://github.com/Phlana/qbot')
-    embed.set_author(name=q['author']['username'], url=link, icon_url=img_link)
-    embed.set_footer(text=q['timestamp'])
+        timestamp = message.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        edited_timestamp = timestamp[:-2] + ':' + timestamp[-2:]
 
-    if q['content']:
-        embed.description = q['content']
-
-    embeds = []
-    if len(q['attachments']) > 0:
-        for i, a in enumerate(q['attachments']):
-            if i == 0:
-                img_embed = embed.set_image(url=a['url'])
-            else:
-                img_embed = discord.Embed(url='https://github.com/Phlana/qbot').set_image(url=a['url'])
-            embeds.append(img_embed)
-    else:
-        embeds.append(embed)
-
-    return embeds
-
-
-async def get_avatar_from_id(user_id):
-    user = await client.fetch_user(user_id)
-    return user.avatar
-
-
-def open_json():
-    with codecs.open('server.json', 'r', 'utf-8') as file:
-        return json.load(file)
-
-
-@tree.command(name='convo', description='make a conversation', guild=discord.Object(id=secrets.guild_id))
-async def convo(interaction, num: app_commands.Range[int, 2, 8]):
-    data = open_json()
-    # filters out quotes without text contents
-    quotes = list(filter(lambda d: d['content'], data['Quotes']))
-
-    conversation = '```\n'
-
-    for _ in range(num):
-        # pick a random quote from available
-        rand_i = random.randint(0, len(quotes)-1)
-        conversation += '**' + quotes[rand_i]['author']['username'] + '**: '
-        conversation += quotes[rand_i]['content'] + '\n'
-
-    conversation += '```'
-
-    await interaction.response.send_message(conversation)
+        row = {
+            'id': message.id,
+            'channel_id': message.channel.id,
+            'content': message.content,
+            'timestamp': edited_timestamp,
+            'author': row_author,
+            'attachments': row_attachments,
+            'embeds': row_embeds,
+        }
+        print(row)
+    pass
+# https://discord.com/channels/162616223719358465/1065114333471838279/1091595353637257216
 
 
-client.run(secrets.token)
+bot.client.run(botsecrets.token)
+
+if __name__ == '__main__':
+    pass
