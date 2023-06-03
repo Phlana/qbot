@@ -1,5 +1,4 @@
 import discord
-import random
 import botsecrets
 import util
 import bot
@@ -50,12 +49,23 @@ async def embed_quote(q):
 
 
 @bot.tree.command(name='add', description='add a quote', guild=discord.Object(id=botsecrets.guild_id))
-async def add(interaction, link: str = None):
-    if link is None:
+async def add(interaction, msg_id: int = None, link: str = None):
+    if msg_id is None and link is None:
         # add the previous message
-        message = next(interaction.channel.history(limit=1))
+        async for m in interaction.channel.history(limit=1):
+            message = m
+    elif msg_id is not None and link is None:
+        # assumes in same channel
+        message = await interaction.channel.fetch_message(msg_id)
+    elif link is not None and msg_id is None:
+        # https://discord.com/channels/162616223719358465/1065114333471838279/1114402350010998864
+        parts = link.split('/')
+        ch_id = parts[-2]
+        msg_id = parts[-1]
+        message = await interaction.guild.fetch_channel(ch_id).fetch_message(msg_id)
     else:
-        message = None
+        await interaction.response.send_message("failed to add quote")
+        return
     await add_quote(interaction, message)
 
 
@@ -65,66 +75,74 @@ async def context_add(interaction, message: discord.Message):
 
 
 async def add_quote(interaction, message):
-    row_author = {
-        'id': message.author.id,
-        'username': message.author.display_name,
-        'avatar': message.author.display_avatar.url,
-        'discriminator': message.author.discriminator,
-        'bot': message.author.bot,
-    }
-
-    row_attachments = []
-    for attachment in message.attachments:
-        row_attachment = {
-            'id': attachment.id,
-            'url': attachment.url,
-            'proxy_url': attachment.proxy_url,
-            'filename': attachment.filename,
-            'width': attachment.width,
-            'height': attachment.height,
-            'size': attachment.size,
+    try:
+        row_author = {
+            'id': str(message.author.id),
+            'username': str(message.author.display_name),
+            'avatar': str(message.author.display_avatar.url),
+            'discriminator': str(message.author.discriminator),
+            'bot': str(message.author.bot),
         }
-        row_attachments.append(row_attachment)
 
-    row_embeds = []
-    for embed in message.embeds:
-        row_embed = {
-            'url': embed.url,
-            'type': embed.type,
-            'title': embed.title,
-            'description': embed.description,
-            'color': embed.color,
+        row_attachments = []
+        for attachment in message.attachments:
+            row_attachment = {
+                'id': str(attachment.id),
+                'url': str(attachment.url),
+                'proxy_url': str(attachment.proxy_url),
+                'filename': str(attachment.filename),
+                'width': str(attachment.width),
+                'height': str(attachment.height),
+                'size': str(attachment.size),
+            }
+            row_attachments.append(row_attachment)
+
+        row_embeds = []
+        for embed in message.embeds:
+            row_embed = {
+                'type': str(embed.type,)
+            }
+            if 'url' in embed:
+                row_embed['url'] = str(embed.url)
+            if 'title' in embed:
+                row_embed['title'] = str(embed.title)
+            if 'description' in embed:
+                row_embed['description'] = str(embed.description)
+            if 'color' in embed:
+                row_embed['color'] = str(embed.color)
+
+            row_embeds.append(row_embed)
+
+        timestamp = message.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        edited_timestamp = timestamp[:-2] + ':' + timestamp[-2:]
+
+        row = {
+            '_id': str(message.id),
+            'channel_id': str(message.channel.id),
+            'content': str(message.content),
+            'timestamp': edited_timestamp,
+            'author': row_author,
+            'attachments': row_attachments,
+            'embeds': row_embeds,
         }
-        row_embeds.append(row_embed)
 
-    timestamp = message.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-    edited_timestamp = timestamp[:-2] + ':' + timestamp[-2:]
-
-    row = {
-        '_id': message.id,
-        'channel_id': message.channel.id,
-        'content': message.content,
-        'timestamp': edited_timestamp,
-        'author': row_author,
-        'attachments': row_attachments,
-        'embeds': row_embeds,
-    }
-
-    mg_id = bot.mg_quotes.insert_one(row)
-    await interaction.response.send_message(
-        'added `' + message.content +
-        '` for `' + message.author.display_name +
-        '` with id `' + str(mg_id.inserted_id) + '`'
-    )
+        mg_id = bot.mg_quotes.insert_one(row)
+        await interaction.response.send_message(
+            'added `' + message.content +
+            '` for `' + message.author.display_name +
+            '` with id `' + str(mg_id.inserted_id) + '`'
+        )
+    except:
+        await interaction.response.send_message("failed to add message with id " + message.id)
 
 
 @bot.tree.command(name='delete', description='delete a quote', guild=discord.Object(id=botsecrets.guild_id))
 async def delete(interaction, msg_id: str):
     result = bot.mg_quotes.delete_one({'_id': msg_id})
     if result.deleted_count > 0:
-        msg = 'deleted quote with id ' + msg_id
+        msg = 'deleted quote with id `' + msg_id + '`'
     else:
-        msg = 'failed to delete quote with id ' + msg_id
+        msg = 'failed to delete quote with id `' + msg_id + '`'
 
     await interaction.response.send_message(msg)
 
