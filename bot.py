@@ -13,3 +13,15 @@ tree = discord.app_commands.CommandTree(client)
 mg_client = pymongo.MongoClient(botsecrets.mongo_uri)
 mg_db = mg_client["Vewem"]
 mg_quotes = mg_db["quotes"]
+
+"""
+TODO:
+chain quotes
+format quote footer timestamp
+display quote videos/embeds
+
+image links but not embeds do not display
+
+maybe
+improve the im hi command
+"""

@@ -29,7 +29,7 @@ async def embed_quote(q):
     img_link = await util.get_avatar_from_id(int(q['author']['id']))
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
     embed.set_author(name=q['author']['username'], url=link, icon_url=img_link)
-    embed.set_footer(text=q['timestamp'])
+    embed.set_footer(text=q['timestamp'] + '  ' + q['_id'])
 
     if q['content']:
         embed.description = q['content']
