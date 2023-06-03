@@ -1,38 +1,32 @@
 import discord
-import json
-import codecs
 import random
 import botsecrets
 import util
 import bot
 
 
-def open_json():
-    with codecs.open('server.json', 'r', 'utf-8') as file:
-        return json.load(file)
-
-
 @bot.tree.command(name='quote', description='post a quote', guild=discord.Object(id=botsecrets.guild_id))
 async def quote(interaction, user: discord.User = None):
-    data = open_json()
-
     # user filter is present, filter all quotes down by id
     if user is not None:
-        quotes_list = list(filter(lambda d: int(d['author']['id']) == user.id, data['Quotes']))
+        q = next(bot.mg_quotes.aggregate([
+            {'$match': {'author.id': str(user.id)}},
+            {'$sample': {'size': 1}},
+        ]))
     # no filter, use all quotes
     else:
-        quotes_list = data['Quotes']
+        q = next(bot.mg_quotes.aggregate([
+            {'$sample': {'size': 1}},
+        ]))
 
-    # pick a random quote from available
-    random_index = random.randint(0, len(quotes_list)-1)
     # build and format embed
-    embeds = await embed_quote(quotes_list[random_index])
+    embeds = await embed_quote(q)
     # send message with quote embed
     await interaction.response.send_message(embeds=embeds)
 
 
 async def embed_quote(q):
-    link = 'https://discord.com/channels/' + botsecrets.guild_id + '/' + q['channel_id'] + '/' + q['id']
+    link = 'https://discord.com/channels/' + botsecrets.guild_id + '/' + q['channel_id'] + '/' + q['_id']
     img_link = await util.get_avatar_from_id(int(q['author']['id']))
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
     embed.set_author(name=q['author']['username'], url=link, icon_url=img_link)
@@ -124,34 +118,59 @@ async def add_quote(interaction, message):
     )
 
 
+@bot.tree.command(name='delete', description='delete a quote', guild=discord.Object(id=botsecrets.guild_id))
+async def delete(interaction, msg_id: str):
+    result = bot.mg_quotes.delete_one({'_id': msg_id})
+    if result.deleted_count > 0:
+        msg = 'deleted quote with id ' + msg_id
+    else:
+        msg = 'failed to delete quote with id ' + msg_id
+
+    await interaction.response.send_message(msg)
+
+
 @bot.tree.command(name='convo', description='make a conversation', guild=discord.Object(id=botsecrets.guild_id))
 async def convo(interaction, num: discord.app_commands.Range[int, 2, 8] = 4):
-    data = open_json()
     # filters out quotes without text contents
-    quotes_list = list(filter(lambda d: d['content'], data['Quotes']))
+    qs = bot.mg_quotes.aggregate([
+        {'$match': {'content': {'$exists': True, '$ne': ''}}},
+        {'$sample': {'size': num}},
+    ])
 
     conversation = '```\n'
 
-    for _ in range(num):
-        # pick a random quote from available
-        rand_i = random.randint(0, len(quotes_list)-1)
-        conversation += '**' + quotes_list[rand_i]['author']['username'] + '**: '
-        conversation += quotes_list[rand_i]['content'] + '\n'
+    for q in qs:
+        conversation += '**' + q['author']['username'] + '**: '
+        conversation += q['content'] + '\n'
 
     conversation += '```'
 
     await interaction.response.send_message(conversation)
 
 
-# @bot.tree.command(name='quotes', description='lists existing quotes', guild=discord.Object(id=botsecrets.guild_id))
-# async def quotes(interaction, user: discord.User = None):
-#     data = open_json()
-#
-#     # user filter is present, filter all quotes down by id
-#     if user is not None:
-#         quotes_list = list(filter(lambda d: int(d['author']['id']) == user.id, data['Quotes']))
-#     # no filter, use all quotes
-#     else:
-#         quotes_list = data['Quotes']
-#
-#     pass
+@bot.tree.command(name='quotes', description='lists existing quotes', guild=discord.Object(id=botsecrets.guild_id))
+async def quotes(interaction, user: discord.User = None):
+    # user filter is present, filter all quotes down by id
+    if user is not None:
+        qs = bot.mg_quotes.find({'author.id': str(user.id)}, {'_id': 1, 'content': 1, 'author': 1})
+    # no filter, use all quotes
+    else:
+        qs = bot.mg_quotes.find({}, {'_id': 1, 'content': 1, 'author': 1})
+
+    embed = discord.Embed(title='All quotes', url='https://github.com/Phlana/qbot')
+    # img_link = await util.get_avatar_from_id(user.id)
+    # embed.set_author(name=user.name, icon_url=img_link)
+
+    embed_content = ''
+    for q in qs:
+        if q['content'] == '':
+            content = 'FILE QUOTE'
+        else:
+            content = q['content']
+
+        embed_content += '**' + str(q['_id']) + ' - ' + q['author']['username'] + ': **\n' \
+                         '    ' + content + '\n\n'
+
+    embed.description = embed_content[:4096]
+
+    await interaction.response.send_message(embed=embed)
