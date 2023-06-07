@@ -13,7 +13,7 @@ async def choose(interaction: discord.Interaction, choices_str: str):
 
     user = interaction.user
     embed = discord.Embed()
-    embed.set_author(name=f'{user.display_name} used ch {choices_str}', icon_url=user.display_avatar.url)
+    embed.set_author(name=f'{user.display_name} used choose {choices_str}', icon_url=user.display_avatar.url)
     embed.colour = user.colour
     embed.description = f'chose {result}'
 
@@ -58,3 +58,11 @@ async def display_avatar(interaction: discord.Interaction, user: discord.User = 
 
     await interaction.response.send_message(f'{user.display_name}\'s display avatar: {user.display_avatar.url}',
                                             embed=embed)
+
+
+@bot.tree.command(name='cheese')
+async def cheese(interaction: discord.Interaction):
+    embed = discord.Embed()
+    embed.set_image(url='https://em-content.zobj.net/thumbs/120/twitter/322/cheese-wedge_1f9c0.png')
+
+    await interaction.response.send_message(embed=embed)

@@ -37,12 +37,15 @@ async def quote(interaction: discord.Interaction, user: discord.User = None):
         q = next(bot.mg_quotes.aggregate([
             {'$match': {'author.id': str(user.id)}},
             {'$sample': {'size': 1}},
-        ]))
+        ]), None)
     # no filter, use all quotes
     else:
         q = next(bot.mg_quotes.aggregate([
             {'$sample': {'size': 1}},
-        ]))
+        ]), None)
+
+    if q is None:
+        return await interaction.response.send_message('failed to find quote')
 
     # build and format embed
     embeds = await embed_quote(q)
@@ -51,11 +54,15 @@ async def quote(interaction: discord.Interaction, user: discord.User = None):
 
 
 @bot.tree.command(name='get_quote', description='posts a quote by id', guild=discord.Object(id=botsecrets.guild_id))
-async def get_quote(interaction: discord.Interaction, quote_id: int):
+async def get_quote(interaction: discord.Interaction, quote_id: str):
     q = next(bot.mg_quotes.aggregate([
-        {'$match': {'_id': str(quote_id)}},
+        {'$match': {'_id': quote_id}},
         {'$sample': {'size': 1}},
-    ]))
+    ]), None)
+
+    if q is None:
+        return await interaction.response.send_message('failed to find quote')
+
     embeds = await embed_quote(q)
     await interaction.response.send_message(embeds=embeds)
 
