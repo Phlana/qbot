@@ -4,31 +4,13 @@ import util
 import bot
 
 
-@bot.tree.command(name='quote', description='post a quote', guild=discord.Object(id=botsecrets.guild_id))
-async def quote(interaction, user: discord.User = None):
-    # user filter is present, filter all quotes down by id
-    if user is not None:
-        q = next(bot.mg_quotes.aggregate([
-            {'$match': {'author.id': str(user.id)}},
-            {'$sample': {'size': 1}},
-        ]))
-    # no filter, use all quotes
-    else:
-        q = next(bot.mg_quotes.aggregate([
-            {'$sample': {'size': 1}},
-        ]))
-
-    # build and format embed
-    embeds = await embed_quote(q)
-    # send message with quote embed
-    await interaction.response.send_message(embeds=embeds)
-
-
 async def embed_quote(q):
     link = 'https://discord.com/channels/' + botsecrets.guild_id + '/' + q['channel_id'] + '/' + q['_id']
     img_link = await util.get_avatar_from_id(int(q['author']['id']))
+    colour = await util.get_colour_from_id(int(q['author']['id']))
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
     embed.set_author(name=q['author']['username'], url=link, icon_url=img_link)
+    embed.colour = colour
     embed.set_footer(text=q['timestamp'] + '  ' + q['_id'])
 
     if q['content']:
@@ -48,8 +30,38 @@ async def embed_quote(q):
     return embeds
 
 
+@bot.tree.command(name='quote', description='post a quote', guild=discord.Object(id=botsecrets.guild_id))
+async def quote(interaction: discord.Interaction, user: discord.User = None):
+    # user filter is present, filter all quotes down by id
+    if user is not None:
+        q = next(bot.mg_quotes.aggregate([
+            {'$match': {'author.id': str(user.id)}},
+            {'$sample': {'size': 1}},
+        ]))
+    # no filter, use all quotes
+    else:
+        q = next(bot.mg_quotes.aggregate([
+            {'$sample': {'size': 1}},
+        ]))
+
+    # build and format embed
+    embeds = await embed_quote(q)
+    # send message with quote embed
+    await interaction.response.send_message(embeds=embeds)
+
+
+@bot.tree.command(name='get_quote', description='posts a quote by id', guild=discord.Object(id=botsecrets.guild_id))
+async def get_quote(interaction: discord.Interaction, quote_id: int):
+    q = next(bot.mg_quotes.aggregate([
+        {'$match': {'_id': str(quote_id)}},
+        {'$sample': {'size': 1}},
+    ]))
+    embeds = await embed_quote(q)
+    await interaction.response.send_message(embeds=embeds)
+
+
 @bot.tree.command(name='add', description='add a quote', guild=discord.Object(id=botsecrets.guild_id))
-async def add(interaction, msg_id: int = None, link: str = None):
+async def add(interaction: discord.Interaction, msg_id: int = None, link: str = None):
     if msg_id is None and link is None:
         # add the previous message
         async for m in interaction.channel.history(limit=1):
@@ -70,11 +82,11 @@ async def add(interaction, msg_id: int = None, link: str = None):
 
 
 @bot.tree.context_menu(name='add as quote', guild=discord.Object(id=botsecrets.guild_id))
-async def context_add(interaction, message: discord.Message):
+async def context_add(interaction: discord.Interaction, message: discord.Message):
     await add_quote(interaction, message)
 
 
-async def add_quote(interaction, message):
+async def add_quote(interaction: discord.Interaction, message):
     try:
         row_author = {
             'id': str(message.author.id),
@@ -133,11 +145,11 @@ async def add_quote(interaction, message):
             '` with id `' + str(mg_id.inserted_id) + '`'
         )
     except:
-        await interaction.response.send_message("failed to add message with id " + message.id)
+        await interaction.response.send_message("failed to add message with id " + str(message.id))
 
 
 @bot.tree.command(name='delete', description='delete a quote', guild=discord.Object(id=botsecrets.guild_id))
-async def delete(interaction, msg_id: str):
+async def delete(interaction: discord.Interaction, msg_id: str):
     result = bot.mg_quotes.delete_one({'_id': msg_id})
     if result.deleted_count > 0:
         msg = 'deleted quote with id `' + msg_id + '`'
@@ -148,7 +160,7 @@ async def delete(interaction, msg_id: str):
 
 
 @bot.tree.command(name='convo', description='make a conversation', guild=discord.Object(id=botsecrets.guild_id))
-async def convo(interaction, num: discord.app_commands.Range[int, 2, 8] = 4):
+async def convo(interaction: discord.Interaction, num: discord.app_commands.Range[int, 2, 8] = 4):
     # filters out quotes without text contents
     qs = bot.mg_quotes.aggregate([
         {'$match': {'content': {'$exists': True, '$ne': ''}}},
@@ -167,7 +179,7 @@ async def convo(interaction, num: discord.app_commands.Range[int, 2, 8] = 4):
 
 
 @bot.tree.command(name='quotes', description='lists existing quotes', guild=discord.Object(id=botsecrets.guild_id))
-async def quotes(interaction, user: discord.User = None):
+async def quotes(interaction: discord.Interaction, user: discord.User = None):
     # user filter is present, filter all quotes down by id
     if user is not None:
         qs = bot.mg_quotes.find({'author.id': str(user.id)}, {'_id': 1, 'content': 1, 'author': 1})
