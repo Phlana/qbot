@@ -97,8 +97,8 @@ async def add_quote(interaction: discord.Interaction, message):
     try:
         row_author = {
             'id': str(message.author.id),
-            'username': str(message.author.display_name),
-            'avatar': str(message.author.display_avatar.url),
+            'username': str(message.author.name),
+            'avatar': str(message.author.avatar.url),
             'discriminator': str(message.author.discriminator),
             'bot': str(message.author.bot),
         }
@@ -148,7 +148,7 @@ async def add_quote(interaction: discord.Interaction, message):
         mg_id = bot.mg_quotes.insert_one(row)
         await interaction.response.send_message(
             'added `' + message.content +
-            '` for `' + message.author.display_name +
+            '` for `' + message.author.name +
             '` with id `' + str(mg_id.inserted_id) + '`'
         )
     except:
