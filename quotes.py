@@ -174,13 +174,11 @@ async def convo(interaction: discord.Interaction, num: discord.app_commands.Rang
         {'$sample': {'size': num}},
     ])
 
-    conversation = '```\n'
+    conversation = ''
 
     for q in qs:
         conversation += '**' + q['author']['username'] + '**: '
         conversation += q['content'] + '\n'
-
-    conversation += '```'
 
     embed = discord.Embed(title='Convo')
     embed.description = conversation[:4096]
