@@ -182,7 +182,10 @@ async def convo(interaction: discord.Interaction, num: discord.app_commands.Rang
 
     conversation += '```'
 
-    await interaction.response.send_message(conversation)
+    embed = discord.Embed(title='Convo')
+    embed.description = conversation[:4096]
+
+    await interaction.response.send_message(embed=embed)
 
 
 @bot.tree.command(name='quotes', description='lists existing quotes', guild=discord.Object(id=botsecrets.guild_id))
