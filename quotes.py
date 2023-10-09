@@ -210,15 +210,3 @@ async def quotes(interaction: discord.Interaction, user: discord.User = None):
     embed.description = embed_content[:4096]
 
     await interaction.response.send_message(embed=embed)
-
-
-@bot.tree.command(name='gm', description='good morning!')
-async def gm(interaction: discord.Interaction):
-    vid = discord.File("media/suisei/suisei_gm.mp4")
-    await interaction.response.send_message(file=vid)
-
-
-@bot.tree.command(name='gn', description='good night!')
-async def gn(interaction: discord.Interaction):
-    vid = discord.File("media/suisei/suisei_gn.mp4")
-    await interaction.response.send_message(file=vid)

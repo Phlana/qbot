@@ -62,7 +62,40 @@ async def display_avatar(interaction: discord.Interaction, user: discord.User = 
 
 @bot.tree.command(name='cheese')
 async def cheese(interaction: discord.Interaction):
-    embed = discord.Embed()
-    embed.set_image(url='https://em-content.zobj.net/thumbs/120/twitter/322/cheese-wedge_1f9c0.png')
+    path = "media/creamery/"
+    cheese_names = [
+        "actually_additions.png",
+        "ad_astra.png",
+        "apple.png",
+        "emojidex.png",
+        "facebook.png",
+        "google.png",
+        "huawei.png",
+        "icons8.png",
+        "joypixels.png",
+        "lg.png",
+        "microsoft_teams.png",
+        "openmoji.png",
+        "playstation.png",
+        "samsung.png",
+        "skype.png",
+        "toss_face.png",
+        "twitter.png",
+        "twitter_sticker.png",
+        "whatsapp.png",
+        "windows.png",
+    ]
+    img = discord.File(path + random.choice(cheese_names))
+    await interaction.response.send_message(file=img)
 
-    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name='gm', description='good morning!')
+async def gm(interaction: discord.Interaction):
+    vid = discord.File("media/suisei/suisei_gm.mp4")
+    await interaction.response.send_message(file=vid)
+
+
+@bot.tree.command(name='gn', description='good night!')
+async def gn(interaction: discord.Interaction):
+    vid = discord.File("media/suisei/suisei_gn.mp4")
+    await interaction.response.send_message(file=vid)
