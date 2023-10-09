@@ -180,9 +180,7 @@ async def convo(interaction: discord.Interaction, num: discord.app_commands.Rang
         conversation += '**' + q['author']['username'] + '**: '
         conversation += q['content'] + '\n'
 
-    embed = discord.Embed(title='Convo')
-    embed.description = conversation[:4096]
-
+    embed = discord.Embed(description=conversation[:4096])
     await interaction.response.send_message(embed=embed)
 
 
@@ -195,7 +193,7 @@ async def quotes(interaction: discord.Interaction, user: discord.User = None):
     else:
         qs = bot.mg_quotes.find({}, {'_id': 1, 'content': 1, 'author': 1})
 
-    embed = discord.Embed(title='All quotes', url='https://github.com/Phlana/qbot')
+    embed = discord.Embed(title='all quotes', url='https://github.com/Phlana/qbot')
     # img_link = await util.get_avatar_from_id(user.id)
     # embed.set_author(name=user.name, icon_url=img_link)
 
@@ -212,3 +210,15 @@ async def quotes(interaction: discord.Interaction, user: discord.User = None):
     embed.description = embed_content[:4096]
 
     await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name='gm', description='good morning!')
+async def gm(interaction: discord.Interaction):
+    vid = discord.File("media/suisei/suisei_gm.mp4")
+    await interaction.response.send_message(file=vid)
+
+
+@bot.tree.command(name='gn', description='good night!')
+async def gn(interaction: discord.Interaction):
+    vid = discord.File("media/suisei/suisei_gn.mp4")
+    await interaction.response.send_message(file=vid)
