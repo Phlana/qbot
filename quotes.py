@@ -177,7 +177,8 @@ async def convo(interaction: discord.Interaction, num: discord.app_commands.Rang
     conversation = ''
 
     for q in qs:
-        conversation += '**' + q['author']['username'] + '**: '
+        conversation += '[' + q['author']['username'] + ']'
+        conversation += '(' + 'https://discord.com/channels/162616223719358465/' + q['channel_id'] + '/' + q['_id'] + '): '
         conversation += q['content'] + '\n'
 
     embed = discord.Embed(description=conversation[:4096])
