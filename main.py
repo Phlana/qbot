@@ -55,12 +55,13 @@ async def on_message(message):
     lower_content = message.content.lower()
     upper_content = message.content.upper()
 
-    if random.random() < 0.05:
-        small_msg = "".join(map(lambda a: tiny_text[a] if a in tiny_text.keys() else a, lower_content))
-        big_msg = "**" + upper_content + "**"
-        bird_msg = small_msg + "\n" + small_msg + "\n" + big_msg
-        await message.channel.send(bird_msg)
-        return
+    if random.random() < 0.0005:
+        if message.content:
+            small_msg = "".join(map(lambda a: tiny_text[a] if a in tiny_text.keys() else a, lower_content))
+            big_msg = "**" + upper_content + "**"
+            bird_msg = small_msg + "\n" + small_msg + "\n" + big_msg
+            await message.channel.send(bird_msg)
+            return
 
     if lower_content.find('im ') >= 0 and len(message.content) < 25:
         index = lower_content.find('im ')
