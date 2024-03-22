@@ -3,6 +3,37 @@ import discord
 import bot
 import quotes
 import misc
+import random
+
+
+tiny_text = {
+    "a": "ᴀ",
+    "b": "ʙ",
+    "c": "ᴄ",
+    "d": "ᴅ",
+    "e": "ᴇ",
+    "f": "ғ",
+    "g": "ɢ",
+    "h": "ʜ",
+    "i": "ɪ",
+    "j": "ᴊ",
+    "k": "ᴋ",
+    "l": "ʟ",
+    "m": "ᴍ",
+    "n": "ɴ",
+    "o": "ᴏ",
+    "p": "ᴘ",
+    "q": "ǫ",
+    "r": "ʀ",
+    "s": "s",
+    "t": "ᴛ",
+    "u": "ᴜ",
+    "v": "ᴠ",
+    "w": "ᴡ",
+    "x": "x",
+    "y": "ʏ",
+    "z": "ᴢ",
+}
 
 
 @bot.client.event
@@ -21,14 +52,21 @@ async def on_message(message):
     if message.author == bot.client.user:
         return
 
-    if message.content.lower().find('im ') >= 0 and len(message.content) < 25:
-        lower_content = message.content.lower()
+    lower_content = message.content.lower()
+    upper_content = message.content.upper()
+
+    if random.random() < 0.05:
+        small_msg = "".join(map(lambda a: tiny_text[a] if a in tiny_text.keys() else a, lower_content))
+        big_msg = "**" + upper_content + "**"
+        bird_msg = small_msg + "\n" + small_msg + "\n" + big_msg
+        await message.channel.send(bird_msg)
+        return
+
+    if lower_content.find('im ') >= 0 and len(message.content) < 25:
         index = lower_content.find('im ')
-        if index != 0:
-            if lower_content[index - 1] == ' ':
-                await message.channel.send('hi ' + message.content[index + 3:])
-        else:
-            await message.channel.send('hi ' + message.content[index + 3:])
+        if index != -1:
+            hi_msg = 'hi ' + message.content[index + 3:]
+            await message.channel.send(hi_msg)
 
 
 bot.client.run(botsecrets.token)
