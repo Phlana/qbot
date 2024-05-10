@@ -5,7 +5,10 @@ import quotes
 import misc
 import cat
 import random
+import logging
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='qbot.log', level=logging.INFO)
 
 tiny_text = {
     "a": "ᴀ",
