@@ -4,8 +4,7 @@ import botsecrets
 import random
 
 
-@bot.tree.command(name='choose', description='randomly choose (comma separated)',
-                  guild=discord.Object(id=botsecrets.guild_id))
+@bot.tree.command(name='choose', description='randomly choose (comma separated)')
 async def choose(interaction: discord.Interaction, choices_str: str):
     choices = [c.strip() for c in choices_str.split(',')]
     result = random.choice(choices)
@@ -20,8 +19,7 @@ async def choose(interaction: discord.Interaction, choices_str: str):
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name='roll', description='get a random number up to limit',
-                  guild=discord.Object(id=botsecrets.guild_id))
+@bot.tree.command(name='roll', description='get a random number up to limit')
 async def roll(interaction: discord.Interaction, limit: int = 100):
     result = str(random.randint(1, limit))
 
@@ -34,7 +32,7 @@ async def roll(interaction: discord.Interaction, limit: int = 100):
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name='avatar', description='fetch a users avatar', guild=discord.Object(id=botsecrets.guild_id))
+@bot.tree.command(name='avatar', description='fetch a users avatar')
 async def avatar(interaction: discord.Interaction, user: discord.User = None):
     # no user was specified so use command invoker
     if not user:
@@ -46,8 +44,7 @@ async def avatar(interaction: discord.Interaction, user: discord.User = None):
     await interaction.response.send_message(f'{user.display_name}\'s avatar: {user.avatar.url}', embed=embed)
 
 
-@bot.tree.command(name='display_avatar', description='fetch a users display avatar',
-                  guild=discord.Object(id=botsecrets.guild_id))
+@bot.tree.command(name='display_avatar', description='fetch a users display avatar')
 async def display_avatar(interaction: discord.Interaction, user: discord.User = None):
     # no user was specified so use command invoker
     if not user:
@@ -60,7 +57,7 @@ async def display_avatar(interaction: discord.Interaction, user: discord.User = 
                                             embed=embed)
 
 
-@bot.tree.command(name='cheese')
+@bot.tree.command(name='cheese', description='cheesed to meet u')
 async def cheese(interaction: discord.Interaction):
     path = "media/creamery/"
     cheese_names = [

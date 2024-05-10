@@ -3,6 +3,7 @@ import discord
 import bot
 import quotes
 import misc
+import cat
 import random
 
 
@@ -55,7 +56,7 @@ async def on_message(message):
     lower_content = message.content.lower()
     upper_content = message.content.upper()
 
-    if random.random() < 0.0005:
+    if len(message.content) <= 40 and random.random() < 0.0005:
         if message.content:
             small_msg = "".join(map(lambda a: tiny_text[a] if a in tiny_text.keys() else a, lower_content))
             big_msg = "**" + upper_content + "**"
