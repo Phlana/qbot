@@ -74,7 +74,6 @@ async def cheese(interaction: discord.Interaction):
         "lg.png",
         "microsoft_teams.png",
         "openmoji.png",
-        "pixel.png",
         "playstation.png",
         "samsung.png",
         "skype.png",
