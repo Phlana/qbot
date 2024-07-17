@@ -19,4 +19,4 @@ def get_daily_reset():
 
 
 def get_rel_timestamp(dt: datetime) -> str:
-    return f'<t:{dt.timestamp()}:R>'
+    return f'<t:{int(dt.timestamp())}:R>'
