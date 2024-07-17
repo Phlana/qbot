@@ -4,6 +4,7 @@ import bot
 import quotes
 import misc
 import cat
+import gp
 import random
 import logging
 

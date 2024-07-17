@@ -13,6 +13,8 @@ tree = discord.app_commands.CommandTree(client)
 mg_client = pymongo.MongoClient(botsecrets.mongo_uri)
 mg_db = mg_client["Vewem"]
 mg_quotes = mg_db["quotes"]
+mg_cats = mg_db["cats"]
+mg_gp = mg_db["gp"]
 
 """
 TODO:
