@@ -2,7 +2,7 @@ import discord
 import bot
 import botsecrets
 import random
-
+import gp
 
 @bot.tree.command(name='choose', description='randomly choose (comma separated)')
 async def choose(interaction: discord.Interaction, choices_str: str):
@@ -83,8 +83,18 @@ async def cheese(interaction: discord.Interaction):
         "whatsapp.png",
         "windows.png",
     ]
-    img = discord.File(path + random.choice(cheese_names))
-    await interaction.response.send_message(file=img)
+    choice_name = random.choice(cheese_names)
+    img = discord.File(path + choice_name)
+
+    if choice_name == "skype.png":
+        # stinky cheese you lose 100-200 gp
+        entry = await gp.check_create(interaction.user.id, interaction.user.name)
+        amount = random.randint(100, 200)
+        bot.mg_gp.update_one({'user_id': interaction.user.id}, {'$set': {'amount': entry['amount'] - amount}})
+
+        await interaction.response.send_message(f'the cheese is so stinky you lose `{amount}` gp', file=img)
+    else:
+        await interaction.response.send_message(file=img)
 
 
 @bot.tree.command(name='gm', description='good morning!')

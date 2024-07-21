@@ -62,6 +62,7 @@ async def daily(interaction: discord.Interaction):
 @bot.tree.command(name='ranking', description='whos got da money 🤑', guild=discord.Object(id=botsecrets.guild_id))
 async def ranking(interaction: discord.Interaction):
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
+    embed.title = 'top 10 money havers'
     embed.description = ''
 
     entries = bot.mg_gp.find().sort('amount', -1)
@@ -69,5 +70,7 @@ async def ranking(interaction: discord.Interaction):
     for entry in entries:
         rank += 1
         embed.description += f'{rank} - {entry["username"]}: `{entry["amount"]}`\n'
+        if rank == 10:
+            break
 
     await interaction.response.send_message(embed=embed)
