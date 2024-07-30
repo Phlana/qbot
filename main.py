@@ -70,7 +70,7 @@ async def on_message(message):
 
     if lower_content.find('im ') >= 0 and len(message.content) < 25:
         index = lower_content.find('im ')
-        if index != -1:
+        if index == 0 or lower_content[index - 1] == ' ':
             hi_msg = 'hi ' + message.content[index + 3:]
             await message.channel.send(hi_msg)
 

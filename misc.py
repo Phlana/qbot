@@ -4,6 +4,7 @@ import botsecrets
 import random
 import gp
 
+
 @bot.tree.command(name='choose', description='randomly choose (comma separated)')
 async def choose(interaction: discord.Interaction, choices_str: str):
     choices = [c.strip() for c in choices_str.split(',')]
