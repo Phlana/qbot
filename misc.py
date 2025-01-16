@@ -3,6 +3,7 @@ import bot
 import botsecrets
 import random
 import gp
+import mongo
 
 
 @bot.tree.command(name='choose', description='randomly choose (comma separated)')
@@ -60,6 +61,8 @@ async def display_avatar(interaction: discord.Interaction, user: discord.User = 
 
 @bot.tree.command(name='cheese', description='cheesed to meet u')
 async def cheese(interaction: discord.Interaction):
+    mg_gp = mongo.get_gp(interaction.guild.id)
+
     path = "media/creamery/"
     cheese_names = [
         "actually_additions.png",
@@ -91,7 +94,7 @@ async def cheese(interaction: discord.Interaction):
         # stinky cheese you lose 100-200 gp
         entry = await gp.check_create(interaction.user.id, interaction.user.name)
         amount = random.randint(100, 200)
-        bot.mg_gp.update_one({'user_id': interaction.user.id}, {'$set': {'amount': entry['amount'] - amount}})
+        mg_gp.update_one({'user_id': interaction.user.id}, {'$set': {'amount': entry['amount'] - amount}})
 
         await interaction.response.send_message(f'the cheese is so stinky you lose `{amount}` gp', file=img)
     else:

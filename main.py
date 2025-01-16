@@ -48,8 +48,9 @@ async def setup_hook():
 
 @bot.client.event
 async def on_ready():
+    await bot.tree.sync()
     await bot.tree.sync(guild=discord.Object(id=botsecrets.guild_id))
-    print(f'We have logged in as {bot.client.user}')
+    print(f'logged in as {bot.client.user}')
 
 
 @bot.client.event
@@ -60,6 +61,7 @@ async def on_message(message):
     lower_content = message.content.lower()
     upper_content = message.content.upper()
 
+    # DashieGames that fucking bird that i hate
     if len(message.content) <= 40 and random.random() < 0.0005:
         if message.content:
             small_msg = "".join(map(lambda a: tiny_text[a] if a in tiny_text.keys() else a, lower_content))
@@ -68,6 +70,7 @@ async def on_message(message):
             await message.channel.send(bird_msg)
             return
 
+    # you are a father
     if lower_content.find('im ') >= 0 and len(message.content) < 25:
         index = lower_content.find('im ')
         if index == 0 or lower_content[index - 1] == ' ':

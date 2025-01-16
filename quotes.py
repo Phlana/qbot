@@ -2,6 +2,7 @@ import discord
 import botsecrets
 import util
 import bot
+import mongo
 
 
 async def embed_quote(q):
@@ -32,15 +33,17 @@ async def embed_quote(q):
 
 @bot.tree.command(name='quote', description='post a quote', guild=discord.Object(id=botsecrets.guild_id))
 async def quote(interaction: discord.Interaction, user: discord.User = None):
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
     # user filter is present, filter all quotes down by id
     if user is not None:
-        q = next(bot.mg_quotes.aggregate([
+        q = next(mg_quotes.aggregate([
             {'$match': {'author.id': str(user.id)}},
             {'$sample': {'size': 1}},
         ]), None)
     # no filter, use all quotes
     else:
-        q = next(bot.mg_quotes.aggregate([
+        q = next(mg_quotes.aggregate([
             {'$sample': {'size': 1}},
         ]), None)
 
@@ -55,7 +58,9 @@ async def quote(interaction: discord.Interaction, user: discord.User = None):
 
 @bot.tree.command(name='get_quote', description='posts a quote by id', guild=discord.Object(id=botsecrets.guild_id))
 async def get_quote(interaction: discord.Interaction, quote_id: str):
-    q = next(bot.mg_quotes.aggregate([
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
+    q = next(mg_quotes.aggregate([
         {'$match': {'_id': quote_id}},
         {'$sample': {'size': 1}},
     ]), None)
@@ -81,7 +86,7 @@ async def add(interaction: discord.Interaction, msg_id: int = None, link: str = 
         parts = link.split('/')
         ch_id = parts[-2]
         msg_id = parts[-1]
-        message = await interaction.guild.fetch_channel(ch_id).fetch_message(msg_id)
+        message = await interaction.guild.fetch_channel(int(ch_id)).fetch_message(msg_id)
     else:
         await interaction.response.send_message("failed to add quote")
         return
@@ -94,6 +99,8 @@ async def context_add(interaction: discord.Interaction, message: discord.Message
 
 
 async def add_quote(interaction: discord.Interaction, message):
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
     try:
         row_author = {
             'id': str(message.author.id),
@@ -145,7 +152,7 @@ async def add_quote(interaction: discord.Interaction, message):
             'embeds': row_embeds,
         }
 
-        mg_id = bot.mg_quotes.insert_one(row)
+        mg_id = mg_quotes.insert_one(row)
         await interaction.response.send_message(
             'added `' + message.content +
             '` for `' + message.author.name +
@@ -157,7 +164,9 @@ async def add_quote(interaction: discord.Interaction, message):
 
 @bot.tree.command(name='delete', description='delete a quote', guild=discord.Object(id=botsecrets.guild_id))
 async def delete(interaction: discord.Interaction, msg_id: str):
-    result = bot.mg_quotes.delete_one({'_id': msg_id})
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
+    result = mg_quotes.delete_one({'_id': msg_id})
     if result.deleted_count > 0:
         msg = 'deleted quote with id `' + msg_id + '`'
     else:
@@ -168,8 +177,10 @@ async def delete(interaction: discord.Interaction, msg_id: str):
 
 @bot.tree.command(name='convo', description='make a conversation', guild=discord.Object(id=botsecrets.guild_id))
 async def convo(interaction: discord.Interaction, num: discord.app_commands.Range[int, 2, 8] = 4):
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
     # filters out quotes without text contents
-    qs = bot.mg_quotes.aggregate([
+    qs = mg_quotes.aggregate([
         {'$match': {'content': {'$exists': True, '$ne': ''}}},
         {'$sample': {'size': num}},
     ])
@@ -187,12 +198,14 @@ async def convo(interaction: discord.Interaction, num: discord.app_commands.Rang
 
 @bot.tree.command(name='quotes', description='lists existing quotes', guild=discord.Object(id=botsecrets.guild_id))
 async def quotes(interaction: discord.Interaction, user: discord.User = None):
+    mg_quotes = mongo.get_quotes(interaction.guild.id)
+
     # user filter is present, filter all quotes down by id
     if user is not None:
-        qs = bot.mg_quotes.find({'author.id': str(user.id)}, {'_id': 1, 'content': 1, 'author': 1})
+        qs = mg_quotes.find({'author.id': str(user.id)}, {'_id': 1, 'content': 1, 'author': 1})
     # no filter, use all quotes
     else:
-        qs = bot.mg_quotes.find({}, {'_id': 1, 'content': 1, 'author': 1})
+        qs = mg_quotes.find({}, {'_id': 1, 'content': 1, 'author': 1})
 
     embed = discord.Embed(title='all quotes', url='https://github.com/Phlana/qbot')
     # img_link = await util.get_avatar_from_id(user.id)

@@ -3,6 +3,7 @@ import bot
 import botsecrets
 import requests
 import random
+import mongo
 from pymongo import ReturnDocument
 
 
@@ -12,19 +13,21 @@ from pymongo import ReturnDocument
     guild=discord.Object(id=botsecrets.guild_id)
 )
 async def meow(interaction: discord.Interaction):
+    mg_cats = mongo.get_cats(interaction.guild.id)
+
     # todo: preroll for rarity of cat
     image_objs = get_common()
     # imgur objects:
-    # [{'id': 'oTQAZac', 'title': None, 'description': None, 'datetime': 1715305311, 'type': 'image/jpeg',
+    # [{'id': 'xxxxxxx', 'title': None, 'description': None, 'datetime': 1715305311, 'type': 'image/jpeg',
     # 'animated': False, 'width': 3036, 'height': 4048, 'size': 1118694, 'views': 56, 'bandwidth': 62646864,
     # 'vote': None, 'favorite': False, 'nsfw': None, 'section': None, 'account_url': None, 'account_id': None,
     # 'is_ad': False, 'in_most_viral': False, 'has_sound': False, 'tags': [], 'ad_type': 0, 'ad_url': '',
-    # 'edited': '0', 'in_gallery': False, 'link': 'https://i.imgur.com/oTQAZac.jpg'}]
+    # 'edited': '0', 'in_gallery': False, 'link': 'https://i.imgur.com/xxxxxxx.jpg'}]
 
     choice = random.choice(image_objs)
 
     # update cat count
-    result = bot.mg_cats.find_one_and_update(
+    result = mg_cats.find_one_and_update(
         {'id': choice['id']},
         {
             '$setOnInsert': {'id': choice['id']},
