@@ -44,12 +44,11 @@ tiny_text = {
 @bot.client.event
 async def setup_hook():
     await bot.tree.sync()
+    await bot.tree.sync(guild=discord.Object(id=botsecrets.guild_id))
 
 
 @bot.client.event
 async def on_ready():
-    await bot.tree.sync()
-    await bot.tree.sync(guild=discord.Object(id=botsecrets.guild_id))
     print(f'logged in as {bot.client.user}')
 
 

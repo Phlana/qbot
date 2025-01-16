@@ -15,9 +15,24 @@ from pymongo import ReturnDocument
 async def meow(interaction: discord.Interaction):
     mg_cats = mongo.get_cats(interaction.guild.id)
 
-    # todo: preroll for rarity of cat
-    image_objs = get_common()
-    # imgur objects:
+    # preroll for rarity of cat
+    roll = random.randint(1, 100)
+    image_objs = []
+    rarity = ''
+    if roll <= 40:
+        image_objs = get_common()
+        rarity = 'common'
+    if 40 < roll <= 70:
+        image_objs = get_uncommon()
+        rarity = 'uncommon'
+    if 70 < roll <= 95:
+        image_objs = get_rare()
+        rarity = 'rare'
+    if 95 < roll:
+        image_objs = get_purple()
+        rarity = 'purple'
+
+    # imgur objects composition:
     # [{'id': 'xxxxxxx', 'title': None, 'description': None, 'datetime': 1715305311, 'type': 'image/jpeg',
     # 'animated': False, 'width': 3036, 'height': 4048, 'size': 1118694, 'views': 56, 'bandwidth': 62646864,
     # 'vote': None, 'favorite': False, 'nsfw': None, 'section': None, 'account_url': None, 'account_id': None,
@@ -26,19 +41,43 @@ async def meow(interaction: discord.Interaction):
 
     choice = random.choice(image_objs)
 
-    # update cat count
-    result = mg_cats.find_one_and_update(
+    # update seen counts
+    record = mg_cats.find_one({'id': choice['id']})
+    if record is None:
+        record = {'id': choice['id']}
+
+    if record.get('num_seen') is None:
+        record['num_seen'] = 1
+    else:
+        record['num_seen'] += 1
+
+    if record.get('user_seen') is None:
+        record['user_seen'] = []
+
+    # find user id
+    found = False
+    user_seen = 1
+    for user in record['user_seen']:
+        if user['id'] == interaction.user.id:
+            user['count'] += 1
+            found = True
+            user_seen = user['count']
+            break
+
+    if not found:
+        record['user_seen'].append({'id': interaction.user.id, 'count': 1})
+
+    mg_cats.update_one(
         {'id': choice['id']},
-        {
-            '$setOnInsert': {'id': choice['id']},
-            '$inc': {'num_seen': 1},
-        },
-        upsert=True,
-        return_document=ReturnDocument.AFTER
+        {'$set': record},
+        upsert=True
     )
+
     link = choice['link']
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
-    embed.title = f'seen {result["num_seen"]} time{"" if result["num_seen"] == 1 else "s"}'
+    embed.title = f'you got a {rarity}!'
+    embed.description = f'seen {record["num_seen"]} total time{"" if record["num_seen"] == 1 else "s"}\n' \
+                        f'seen {user_seen} time{"" if user_seen == 1 else "s"} by you'
     embed.set_image(url=link)
 
     await interaction.response.send_message(embed=embed)
@@ -47,7 +86,7 @@ async def meow(interaction: discord.Interaction):
 def get_common():
     response = requests.request(
         'GET',
-        'https://api.imgur.com/3/album/' + botsecrets.imgur_cat_album_hash + '/images',
+        'https://api.imgur.com/3/album/' + botsecrets.commons + '/images',
         headers={'Authorization': 'Client-ID ' + botsecrets.imgur_client_id},
         data={},
         files={}
@@ -55,11 +94,32 @@ def get_common():
     return response.json()['data']
 
 
-# todo: change hash for new album
+def get_uncommon():
+    response = requests.request(
+        'GET',
+        'https://api.imgur.com/3/album/' + botsecrets.uncommons + '/images',
+        headers={'Authorization': 'Client-ID ' + botsecrets.imgur_client_id},
+        data={},
+        files={}
+    )
+    return response.json()['data']
+
+
 def get_rare():
     response = requests.request(
         'GET',
-        'https://api.imgur.com/3/album/' + botsecrets.imgur_cat_album_hash + '/images',
+        'https://api.imgur.com/3/album/' + botsecrets.rares + '/images',
+        headers={'Authorization': 'Client-ID ' + botsecrets.imgur_client_id},
+        data={},
+        files={}
+    )
+    return response.json()['data']
+
+
+def get_purple():
+    response = requests.request(
+        'GET',
+        'https://api.imgur.com/3/album/' + botsecrets.purples + '/images',
         headers={'Authorization': 'Client-ID ' + botsecrets.imgur_client_id},
         data={},
         files={}
