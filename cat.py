@@ -19,7 +19,7 @@ async def meow(interaction: discord.Interaction):
     roll = random.randint(1, 100)
     image_objs = []
     rarity = ''
-    color = ''
+    color = None
     if roll <= 40:
         image_objs = get_common()
         rarity = 'common'
@@ -81,7 +81,8 @@ async def meow(interaction: discord.Interaction):
     link = choice['link']
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
     embed.title = f'you got a{"n" if rarity == "uncommon" else ""} {rarity}!'
-    embed.colour = color
+    if color is not None:
+        embed.colour = discord.Color.from_str(color)
     embed.description = f'seen {record["num_seen"]} time{"" if record["num_seen"] == 1 else "s"} total\n' \
                         f'seen {user_seen} time{"" if user_seen == 1 else "s"} by you'
     embed.set_image(url=link)
