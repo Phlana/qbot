@@ -19,18 +19,23 @@ async def meow(interaction: discord.Interaction):
     roll = random.randint(1, 100)
     image_objs = []
     rarity = ''
+    color = ''
     if roll <= 40:
         image_objs = get_common()
         rarity = 'common'
+        color = '#65655d'
     if 40 < roll <= 70:
         image_objs = get_uncommon()
         rarity = 'uncommon'
+        color = '#4a8612'
     if 70 < roll <= 95:
         image_objs = get_rare()
         rarity = 'rare'
+        color = '#1c6ea0'
     if 95 < roll:
         image_objs = get_purple()
         rarity = 'purple'
+        color = '#ce32fd'
 
     # imgur objects composition:
     # [{'id': 'xxxxxxx', 'title': None, 'description': None, 'datetime': 1715305311, 'type': 'image/jpeg',
@@ -75,8 +80,9 @@ async def meow(interaction: discord.Interaction):
 
     link = choice['link']
     embed = discord.Embed(url='https://github.com/Phlana/qbot')
-    embed.title = f'you got a {rarity}!'
-    embed.description = f'seen {record["num_seen"]} total time{"" if record["num_seen"] == 1 else "s"}\n' \
+    embed.title = f'you got a{"n" if rarity == "uncommon" else ""} {rarity}!'
+    embed.colour = color
+    embed.description = f'seen {record["num_seen"]} time{"" if record["num_seen"] == 1 else "s"} total\n' \
                         f'seen {user_seen} time{"" if user_seen == 1 else "s"} by you'
     embed.set_image(url=link)
 
