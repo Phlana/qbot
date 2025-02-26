@@ -111,3 +111,9 @@ async def gm(interaction: discord.Interaction):
 async def gn(interaction: discord.Interaction):
     vid = discord.File("media/suisei/suisei_gn.mp4")
     await interaction.response.send_message(file=vid)
+
+
+@bot.tree.command(name='feet', description='ohh myyy')
+async def feet(interaction: discord.Interaction):
+    vid = discord.File("media/feet.mp4")
+    await interaction.response.send_message(file=vid)
