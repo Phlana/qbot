@@ -92,7 +92,7 @@ async def cheese(interaction: discord.Interaction):
 
     if choice_name == "skype.png":
         # stinky cheese you lose 100-200 gp
-        entry = await gp.check_create(interaction.user.id, interaction.user.name)
+        entry = await gp.check_create(mg_gp, interaction.user.id, interaction.user.name)
         amount = random.randint(100, 200)
         mg_gp.update_one({'user_id': interaction.user.id}, {'$set': {'amount': entry['amount'] - amount}})
 
