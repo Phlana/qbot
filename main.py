@@ -54,7 +54,10 @@ async def on_ready():
 
 @bot.client.event
 async def on_message(message):
-    if message.author == bot.client.user:
+    if message.webhook_id is not None and message.content == 'im slaying a slur rn':
+        await message.channel.send('blorva btw')
+        return
+    if message.author.bot or message.webhook_id is not None:
         return
 
     lower_content = message.content.lower()
