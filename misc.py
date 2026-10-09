@@ -86,6 +86,7 @@ async def cheese(interaction: discord.Interaction):
         "twitter_sticker.png",
         "whatsapp.png",
         "windows.png",
+        "boshua.png",
     ]
     choice_name = random.choice(cheese_names)
     img = discord.File(path + choice_name)
